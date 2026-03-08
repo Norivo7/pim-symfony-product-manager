@@ -29,10 +29,10 @@ class Product
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     private string $price;
 
-    #[ORM\Column(enumType: Currency::class)]
+    #[ORM\Column(length: 3, enumType: Currency::class)]
     private Currency $currency;
 
-    #[ORM\Column(enumType: ProductStatus::class)]
+    #[ORM\Column(length: 16, enumType: ProductStatus::class)]
     private ProductStatus $status;
 
     #[ORM\Column]

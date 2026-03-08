@@ -155,14 +155,12 @@ class Product
         }
 
         $oldPrice = $this->price;
+
         $this->price = $newPrice;
         $this->touch();
 
-        $this->priceHistoryEntries->add(new PriceHistoryEntry(
-            $this,
-            $oldPrice,
-            $newPrice
-        ));
+        $priceHistoryEntry = new PriceHistoryEntry($this, $oldPrice, $newPrice);
+        $this->priceHistoryEntries->add($priceHistoryEntry);
 
         return true;
     }

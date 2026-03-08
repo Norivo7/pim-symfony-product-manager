@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Product;
+use App\Enum\ProductStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 class ProductRepository extends ServiceEntityRepository
@@ -48,5 +49,33 @@ class ProductRepository extends ServiceEntityRepository
                 ->getOneOrNullResult() !== null;
     }
 
+    public function findPaginated(?string $status, int $page, int $limit): array
+    {
+        $queryBuilder = $this->createQueryBuilder('product')
+            ->andWhere('product.deletedAt IS NULL')
+            ->orderBy('product.id', 'DESC')
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit);
 
+        if ($status !== null) {
+            $queryBuilder->andWhere('product.status = :status')
+                ->setParameter('status', ProductStatus::from($status));
+        }
+
+        return $queryBuilder->getQuery()->getResult();
+    }
+
+    public function countActive(?string $status): int
+    {
+        $queryBuilder = $this->createQueryBuilder('product')
+            ->select('COUNT(product.id)')
+            ->andWhere('product.deletedAt IS NULL');
+
+        if ($status !== null) {
+            $queryBuilder->andWhere('product.status = :status')
+                ->setParameter('status', ProductStatus::from($status));
+        }
+
+        return $queryBuilder->getQuery()->getSingleScalarResult();
+    }
 }

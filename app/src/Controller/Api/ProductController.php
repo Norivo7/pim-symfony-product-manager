@@ -6,6 +6,7 @@ namespace App\Controller\Api;
 
 use App\Repository\ProductRepository;
 use App\Request\Product\CreateProductRequest;
+use App\Request\Product\ListProductsRequest;
 use App\Request\Product\UpdateProductRequest;
 use App\Service\Product\CreateProductService;
 use App\Service\Product\DeleteProductService;
@@ -235,4 +236,72 @@ final class ProductController extends AbstractController
         return $this->json(null, Response::HTTP_NO_CONTENT);
     }
 
+    #[Route('', name: 'api_products_list', methods: ['GET'])]
+    public function list(
+        Request $request,
+        ValidatorInterface $validator,
+        ProductRepository $productRepository,
+    ): JsonResponse {
+        $listProductsRequest = new ListProductsRequest();
+
+        $listProductsRequest->status = $request->query->get('status');
+        $listProductsRequest->page = max(1, $request->query->getInt('page', 1));
+        $listProductsRequest->limit = max(1, $request->query->getInt('limit', 10));
+
+        $violations = $validator->validate($listProductsRequest);
+
+        if (count($violations) > 0) {
+            $errors = [];
+
+            foreach ($violations as $violation) {
+                $errors[] = [
+                    'field' => $violation->getPropertyPath(),
+                    'message' => $violation->getMessage(),
+                ];
+            }
+
+            return $this->json([
+                'message' => 'Validation failed.',
+                'errors' => $errors,
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $products = $productRepository->findPaginated(
+            $listProductsRequest->status,
+            $listProductsRequest->page,
+            $listProductsRequest->limit,
+        );
+
+        $total = $productRepository->countActive($listProductsRequest->status);
+
+        $items = [];
+
+        foreach ($products as $product) {
+            $items[] = [
+                'id' => $product->getId(),
+                'name' => $product->getName(),
+                'sku' => $product->getSku(),
+                'price' => $product->getPrice(),
+                'currency' => $product->getCurrency()->value,
+                'status' => $product->getStatus()->value,
+                'createdAt' => $product->getCreatedAt()->format(\DateTimeInterface::ATOM),
+                'updatedAt' => $product->getUpdatedAt()->format(\DateTimeInterface::ATOM),
+                'deletedAt' => $product->getDeletedAt()?->format(\DateTimeInterface::ATOM),
+                'version' => $product->getVersion(),
+            ];
+        }
+
+        return $this->json([
+            'items' => $items,
+            'pagination' => [
+                'page' => $listProductsRequest->page,
+                'limit' => $listProductsRequest->limit,
+                'total' => $total,
+                'pages' => ceil($total / $listProductsRequest->limit),
+            ],
+            'filters' => [
+                'status' => $listProductsRequest->status,
+            ],
+        ]);
+    }
 }

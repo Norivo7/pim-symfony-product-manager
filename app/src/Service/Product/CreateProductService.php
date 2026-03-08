@@ -10,7 +10,7 @@ use App\Enum\ProductStatus;
 use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
-final readonly class CreateProduct
+final readonly class CreateProductService
 {
     public function __construct(
         private EntityManagerInterface $entityManager,

@@ -167,7 +167,7 @@ class Product
         return true;
     }
 
-    public function delete(): void
+    public function softDelete(): void
     {
         $this->deletedAt = new \DateTimeImmutable();
         $this->touch();

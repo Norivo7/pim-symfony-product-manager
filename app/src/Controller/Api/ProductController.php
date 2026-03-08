@@ -8,6 +8,7 @@ use App\Repository\ProductRepository;
 use App\Request\Product\CreateProductRequest;
 use App\Request\Product\UpdateProductRequest;
 use App\Service\Product\CreateProductService;
+use App\Service\Product\DeleteProductService;
 use App\Service\Product\UpdateProductService;
 use Doctrine\ORM\OptimisticLockException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -216,6 +217,22 @@ final class ProductController extends AbstractController
             'version' => $product->getVersion(),
             'priceHistory' => $priceHistory,
         ]);
+    }
+
+    #[Route('/{id}', name: 'api_products_delete', methods: ['DELETE'])]
+    public function delete(
+        int $id,
+        DeleteProductService $deleteProduct,
+    ): JsonResponse {
+        try {
+            $deleteProduct->handle($id);
+        } catch (\DomainException $exception) {
+            return $this->json([
+                'message' => $exception->getMessage(),
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->json(null, Response::HTTP_NO_CONTENT);
     }
 
 }

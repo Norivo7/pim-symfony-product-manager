@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Product;
+namespace App\Service\Product;
 
 use App\Entity\Product;
 use App\Enum\Currency;

@@ -20,10 +20,37 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
 
 #[Route('/api/products')]
 final class ProductController extends AbstractController
 {
+    #[OA\Post(
+        path: '/api/products',
+        summary: 'Create product',
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: new Model(type: CreateProductRequest::class))
+        ),
+        tags: ['Product']
+    )]
+    #[OA\Response(
+        response: 201,
+        description: 'Product created successfully'
+    )]
+    #[OA\Response(
+        response: 409,
+        description: 'SKU conflict'
+    )]
+    #[OA\Response(
+        response: 422,
+        description: 'Validation failed'
+    )]
+    #[OA\Response(
+        response: 400,
+        description: 'Invalid request payload'
+    )]
     #[Route('', name: 'api_products_create', methods: ['POST'])]
     public function create(
         Request $request,
@@ -91,6 +118,26 @@ final class ProductController extends AbstractController
         ], Response::HTTP_CREATED);
     }
 
+    #[OA\Get(
+        path: '/api/products/{id}',
+        summary: 'Get product details with price history',
+        tags: ['Product']
+    )]
+    #[OA\Parameter(
+        name: 'id',
+        description: 'Product ID',
+        in: 'path',
+        required: true,
+        schema: new OA\Schema(type: 'integer')
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Product details returned successfully'
+    )]
+    #[OA\Response(
+        response: 404,
+        description: 'Product not found'
+    )]
     #[Route('/{id}', name: 'api_products_get', methods: ['GET'])]
     public function get(
         int               $id,
@@ -130,6 +177,42 @@ final class ProductController extends AbstractController
         ]);
     }
 
+    #[OA\Put(
+        path: '/api/products/{id}',
+        summary: 'Update product',
+        tags: ['Product']
+    )]
+    #[OA\Parameter(
+        name: 'id',
+        description: 'Product ID',
+        in: 'path',
+        required: true,
+        schema: new OA\Schema(type: 'integer')
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(ref: new Model(type: UpdateProductRequest::class))
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Product updated successfully'
+    )]
+    #[OA\Response(
+        response: 404,
+        description: 'Product not found'
+    )]
+    #[OA\Response(
+        response: 409,
+        description: 'SKU conflict or stale product version'
+    )]
+    #[OA\Response(
+        response: 422,
+        description: 'Validation failed'
+    )]
+    #[OA\Response(
+        response: 400,
+        description: 'Invalid request payload'
+    )]
     #[Route('/{id}', name: 'api_products_update', methods: ['PUT'])]
     public function update(
         int $id,
@@ -220,6 +303,26 @@ final class ProductController extends AbstractController
         ]);
     }
 
+    #[OA\Delete(
+        path: '/api/products/{id}',
+        summary: 'Soft delete product',
+        tags: ['Product']
+    )]
+    #[OA\Parameter(
+        name: 'id',
+        description: 'Product ID',
+        in: 'path',
+        required: true,
+        schema: new OA\Schema(type: 'integer')
+    )]
+    #[OA\Response(
+        response: 204,
+        description: 'Product deleted successfully'
+    )]
+    #[OA\Response(
+        response: 404,
+        description: 'Product not found'
+    )]
     #[Route('/{id}', name: 'api_products_delete', methods: ['DELETE'])]
     public function delete(
         int $id,
@@ -236,6 +339,40 @@ final class ProductController extends AbstractController
         return $this->json(null, Response::HTTP_NO_CONTENT);
     }
 
+    #[OA\Get(
+        path: '/api/products',
+        summary: 'List products with pagination and optional status filter',
+        tags: ['Product']
+    )]
+    #[OA\Parameter(
+        name: 'status',
+        description: 'Filter by product status',
+        in: 'query',
+        required: false,
+        schema: new OA\Schema(type: 'string', enum: ['active', 'inactive', 'draft'])
+    )]
+    #[OA\Parameter(
+        name: 'page',
+        description: 'Page number',
+        in: 'query',
+        required: false,
+        schema: new OA\Schema(type: 'integer', default: 1)
+    )]
+    #[OA\Parameter(
+        name: 'limit',
+        description: 'Items per page',
+        in: 'query',
+        required: false,
+        schema: new OA\Schema(type: 'integer', default: 10)
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Product list returned successfully'
+    )]
+    #[OA\Response(
+        response: 422,
+        description: 'Validation failed'
+    )]
     #[Route('', name: 'api_products_list', methods: ['GET'])]
     public function list(
         Request $request,

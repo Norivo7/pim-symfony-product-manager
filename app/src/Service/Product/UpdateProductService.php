@@ -42,11 +42,11 @@ final readonly class UpdateProductService
             throw new \DomainException('Product not found.');
         }
 
-        if ($this->productRepository->existsActiveBySkuExcludingId($sku, $id)) {
-            throw new \DomainException('Active product with given SKU already exists.');
-        }
-
         $this->entityManager->lock($product, LockMode::OPTIMISTIC, $version);
+
+        if ($this->productRepository->existsActiveBySkuExcludingId($sku, $id)) {
+            throw new \DomainException('SKU is already used by another active product.');
+        }
 
         $oldPrice = $product->getPrice();
 

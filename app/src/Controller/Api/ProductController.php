@@ -189,7 +189,7 @@ final class ProductController extends AbstractController
             ], $statusCode);
         } catch (OptimisticLockException) {
             return $this->json([
-                'message' => 'Product was modified by another user. Refresh and try again.',
+                'message' => 'Product has been modified. Please refresh and try again.',
             ], Response::HTTP_CONFLICT);
         }
 

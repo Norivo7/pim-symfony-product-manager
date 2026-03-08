@@ -14,4 +14,26 @@ class ProductRepository extends ServiceEntityRepository
         parent::__construct($registry, Product::class);
     }
 
+    public function existsActiveBySku(string $sku): bool
+    {
+        return $this->createQueryBuilder('product')
+                ->andWhere('product.sku = :sku')
+                ->andWhere('product.deletedAt IS NULL')
+                ->setParameter('sku', $sku)
+                ->setMaxResults(1)
+                ->getQuery()
+                ->getOneOrNullResult() !== null;
+    }
+
+    public function findActiveById(int $id): ?Product
+    {
+        return $this->createQueryBuilder('product')
+            ->andWhere('product.id = :id')
+            ->andWhere('product.deletedAt IS NULL')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+
 }

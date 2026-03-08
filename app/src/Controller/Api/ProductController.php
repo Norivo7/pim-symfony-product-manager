@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Api;
 
 use App\Application\Product\CreateProduct;
+use App\Repository\ProductRepository;
 use App\Request\Product\CreateProductRequest;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -81,5 +82,43 @@ final class ProductController extends AbstractController
             'deletedAt' => $product->getDeletedAt()?->format(\DateTimeInterface::ATOM),
             'version' => $product->getVersion(),
         ], Response::HTTP_CREATED);
+    }
+
+    #[Route('/{id}', name: 'api_products_get', methods: ['GET'])]
+    public function get(
+        int $id,
+        ProductRepository $productRepository,
+    ): JsonResponse {
+        $product = $productRepository->findActiveById($id);
+
+        if (!$product) {
+            return $this->json([
+                'message' => 'Product not found.',
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        $priceHistory = [];
+
+        foreach ($product->getPriceHistoryEntries() as $entry) {
+            $priceHistory[] = [
+                'oldPrice' => $entry->getOldPrice(),
+                'newPrice' => $entry->getNewPrice(),
+                'changedAt' => $entry->getChangedAt()->format(\DateTimeInterface::ATOM),
+            ];
+        }
+
+        return $this->json([
+            'id' => $product->getId(),
+            'name' => $product->getName(),
+            'sku' => $product->getSku(),
+            'price' => $product->getPrice(),
+            'currency' => $product->getCurrency()->value,
+            'status' => $product->getStatus()->value,
+            'createdAt' => $product->getCreatedAt()->format(\DateTimeInterface::ATOM),
+            'updatedAt' => $product->getUpdatedAt()->format(\DateTimeInterface::ATOM),
+            'deletedAt' => $product->getDeletedAt()?->format(\DateTimeInterface::ATOM),
+            'version' => $product->getVersion(),
+            'priceHistory' => $priceHistory
+        ]);
     }
 }

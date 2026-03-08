@@ -35,5 +35,18 @@ class ProductRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    public function existsActiveBySkuExcludingId(string $sku, int $excludedId): bool
+    {
+        return $this->createQueryBuilder('product')
+                ->andWhere('product.sku = :sku')
+                ->andWhere('product.deletedAt IS NULL')
+                ->andWhere('product.id != :excludedId')
+                ->setParameter('sku', $sku)
+                ->setParameter('excludedId', $excludedId)
+                ->setMaxResults(1)
+                ->getQuery()
+                ->getOneOrNullResult() !== null;
+    }
+
 
 }

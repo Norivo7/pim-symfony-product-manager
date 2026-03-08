@@ -6,7 +6,10 @@ namespace App\Controller\Api;
 
 use App\Repository\ProductRepository;
 use App\Request\Product\CreateProductRequest;
+use App\Request\Product\UpdateProductRequest;
 use App\Service\Product\CreateProductService;
+use App\Service\Product\UpdateProductService;
+use Doctrine\ORM\OptimisticLockException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -122,6 +125,96 @@ final class ProductController extends AbstractController
             'deletedAt' => $product->getDeletedAt()?->format(\DateTimeInterface::ATOM),
             'version' => $product->getVersion(),
             'priceHistory' => $priceHistory
+        ]);
+    }
+
+    #[Route('/{id}', name: 'api_products_update', methods: ['PUT'])]
+    public function update(
+        int $id,
+        Request $request,
+        SerializerInterface $serializer,
+        ValidatorInterface $validator,
+        UpdateProductService $updateProductService,
+    ): JsonResponse {
+        try {
+            /** @var UpdateProductRequest $updateProductRequest */
+            $updateProductRequest = $serializer->deserialize(
+                $request->getContent(),
+                UpdateProductRequest::class,
+                'json'
+            );
+        } catch (ExceptionInterface) {
+            return $this->json([
+                'message' => 'Invalid request payload.',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $violations = $validator->validate($updateProductRequest);
+
+        if (count($violations) > 0) {
+            $errors = [];
+
+            foreach ($violations as $violation) {
+                $errors[] = [
+                    'field' => $violation->getPropertyPath(),
+                    'message' => $violation->getMessage(),
+                ];
+            }
+
+            return $this->json([
+                'message' => 'Validation failed.',
+                'errors' => $errors,
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        try {
+            $product = $updateProductService->handle(
+                $id,
+                $updateProductRequest->name,
+                $updateProductRequest->sku,
+                $updateProductRequest->price,
+                $updateProductRequest->currency,
+                $updateProductRequest->status,
+                $updateProductRequest->version,
+            );
+        } catch (\DomainException $exception) {
+            $statusCode = Response::HTTP_CONFLICT;
+
+            if ($exception->getMessage() === 'Product not found.') {
+                $statusCode = Response::HTTP_NOT_FOUND;
+            }
+
+            return $this->json([
+                'message' => $exception->getMessage(),
+            ], $statusCode);
+        } catch (OptimisticLockException) {
+            return $this->json([
+                'message' => 'Product was modified by another user. Refresh and try again.',
+            ], Response::HTTP_CONFLICT);
+        }
+
+        $priceHistory = [];
+
+        foreach ($product->getPriceHistoryEntries() as $entry) {
+            $priceHistory[] = [
+                'oldPrice' => $entry->getOldPrice(),
+                'newPrice' => $entry->getNewPrice(),
+                'changedAt' => $entry->getChangedAt()->format(\DateTimeInterface::ATOM),
+            ];
+        }
+
+        return $this->json([
+            'id' => $product->getId(),
+            'name' => $product->getName(),
+            'sku' => $product->getSku(),
+            'price' => $product->getPrice(),
+            'currency' => $product->getCurrency()->value,
+            'status' => $product->getStatus()->value,
+            'createdAt' => $product->getCreatedAt()->format(\DateTimeInterface::ATOM),
+            'updatedAt' => $product->getUpdatedAt()->format(\DateTimeInterface::ATOM),
+            'deletedAt' => $product->getDeletedAt()?->format(\DateTimeInterface::ATOM),
+            'version' => $product->getVersion(),
+            'priceHistory' => $priceHistory,
         ]);
     }
 

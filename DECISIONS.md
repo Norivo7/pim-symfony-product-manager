@@ -41,7 +41,7 @@ Testy pokrywają główne scenariusze API:
 
 ## Możliwe usprawnienia
 
- ### Lepsza obsługa wyjątków
+### Lepsza obsługa wyjątków
 
 Obecnie część błędów zwracana jest na podstawie wyjątków ogólnych, np. DomainException.
 W większym projekcie lepiej byłoby użyć bardziej precyzyjnych wyjątków, np.:
@@ -49,7 +49,6 @@ W większym projekcie lepiej byłoby użyć bardziej precyzyjnych wyjątków, np
 - ProductNotFoundException
 - SkuAlreadyExistsException
 - StaleProductVersionException
-  Statyczna analiza
 
 ### Do projektu warto byłoby dodać statyczną analizę, np.:
 

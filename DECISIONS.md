@@ -4,8 +4,10 @@ Na początku rozważałem podejście w stylu DDD, ale ze względu na czas zdecyd
 Uważam, że DDD byłoby overkillem dla tego projektu.
 
 ### Product
-Encja Product zawiera część logiki biznesowej, najważniejszą decyzją było rozdzielenie funkcji updateDetails i updatePrice.
-Dlatego, że aktualizacja ceny musi zapisywać historię ceny.  Oddzielamy te dwie funkcje, aby zachować czytelność logiki i tworzyć historię cen tylko wtedy gdy ta się zmienia
+Encja Product zawiera część logiki biznesowej, Jedną z ważniejszych decyzji było rozdzielenie
+funkcji updateDetails i changePrice. Dlatego, że aktualizacja ceny musi zapisywać historię ceny. 
+Oddzielamy te dwie funkcje, aby zachować czytelność logiki i tworzyć historię cen tylko wtedy
+gdy ta się zmienia
 
 Param price jest stringiem, ponieważ float może być problematyczny w przypadku precyzyjnych wartości pieniężnych,
 a string pozwala na dokładne przechowywanie wartości bez ryzyka utraty precyzji.
@@ -60,7 +62,6 @@ W większym projekcie lepiej byłoby użyć bardziej precyzyjnych wyjątków, np
 Do utrzymania spójnego formatowania kodu dołożyłbym narzędzia typu:
 - PHP CS Fixer
 - ECS / PHPCS
-- 
 
 ### Pipeline CI
 
